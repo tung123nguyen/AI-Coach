@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -17,7 +16,7 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
 
@@ -35,7 +34,7 @@ export default function SignupPage() {
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } }
+      options: { data: { name } },
     })
 
     if (signUpError) {
@@ -48,16 +47,27 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Tạo tài khoản</CardTitle>
-          <p className="text-sm text-gray-500 mt-1">Bắt đầu luyện giao tiếp miễn phí</p>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      {/* Background orbs */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute -top-20 right-0 w-125 h-125 bg-blue-600/7 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 -left-20 w-100 h-100 bg-violet-600/6 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block font-bold text-xl tracking-tight">
+            <span className="text-blue-400">Conv</span>Gym
+          </Link>
+          <p className="text-zinc-500 text-sm mt-2">Tạo tài khoản miễn phí</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl shadow-black/30">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="name">Tên của bạn</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-zinc-300">Tên của bạn</Label>
               <Input
                 id="name"
                 type="text"
@@ -66,10 +76,11 @@ export default function SignupPage() {
                 onChange={e => setName(e.target.value)}
                 required
                 disabled={loading}
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
               />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-zinc-300">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -78,10 +89,11 @@ export default function SignupPage() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
               />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Mật khẩu</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-zinc-300">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
@@ -90,23 +102,39 @@ export default function SignupPage() {
                 onChange={e => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
               />
             </div>
+
             {error && (
-              <p className="text-sm text-red-500">{error}</p>
+              <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5">
+                <span className="shrink-0 mt-px">⚠</span>
+                <span>{error}</span>
+              </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl h-11 mt-2 transition-colors"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Đang tạo tài khoản...
+                </span>
+              ) : 'Đăng ký'}
             </Button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Đã có tài khoản?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
-              Đăng nhập
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="text-center text-sm text-zinc-500 mt-5">
+          Đã có tài khoản?{' '}
+          <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+            Đăng nhập
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

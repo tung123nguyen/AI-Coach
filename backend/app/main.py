@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import situations, sessions
+from app.routers import situations, sessions, messages
 
 app = FastAPI(
     title="Conversation Gym API",
@@ -24,4 +24,4 @@ async def health():
 
 app.include_router(situations.router, prefix="/api", tags=["situations"])
 app.include_router(sessions.router, prefix="/api", tags=["sessions"])
-# Phase 4: app.include_router(messages.router, prefix="/api", tags=["messages"])
+app.include_router(messages.router, prefix="/api", tags=["messages"])

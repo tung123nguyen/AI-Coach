@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(d:\\\\conversation-gym\\\\backend\\\\venv\\\\Scripts\\\\pip.exe install --timeout 60 supabase \"python-jose[cryptography]\" 2>&1)"
-    ]
-  }
-}

@@ -40,6 +40,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
       sessionId={id}
       initialMessages={messages || []}
       persona={situation?.persona_data || {}}
+      sessionStatus={session.status}
     />
   )
 }

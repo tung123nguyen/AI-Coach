@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { api } from '@/lib/api'
 import { Message, Persona } from '@/lib/types'
 import ChatMessage from '@/components/chat-message'
@@ -10,10 +11,12 @@ interface ChatClientProps {
   sessionId: string
   initialMessages: Message[]
   persona: Persona
+  sessionStatus?: 'active' | 'ended'
 }
 
-export default function ChatClient({ sessionId, initialMessages, persona }: ChatClientProps) {
+export default function ChatClient({ sessionId, initialMessages, persona, sessionStatus }: ChatClientProps) {
   const router = useRouter()
+  const isEnded = sessionStatus === 'ended'
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -101,13 +104,22 @@ export default function ChatClient({ sessionId, initialMessages, persona }: Chat
             <div className="text-xs text-zinc-500">Đang chat</div>
           </div>
         </div>
-        <button
-          onClick={handleEnd}
-          disabled={isEnding}
-          className="text-sm text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded-xl px-4 py-2 transition-colors disabled:opacity-50"
-        >
-          {isEnding ? 'Đang kết thúc...' : 'Kết thúc'}
-        </button>
+        {isEnded ? (
+          <Link
+            href={`/feedback/${sessionId}`}
+            className="text-sm text-blue-400 hover:text-blue-300 border border-blue-700/50 hover:border-blue-500 rounded-xl px-4 py-2 transition-colors"
+          >
+            Xem feedback →
+          </Link>
+        ) : (
+          <button
+            onClick={handleEnd}
+            disabled={isEnding}
+            className="text-sm text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded-xl px-4 py-2 transition-colors disabled:opacity-50"
+          >
+            {isEnding ? 'Đang kết thúc...' : 'Kết thúc'}
+          </button>
+        )}
       </div>
 
       {/* Messages area */}
@@ -141,33 +153,41 @@ export default function ChatClient({ sessionId, initialMessages, persona }: Chat
 
       {/* Input bar */}
       <div className="sticky bottom-0 bg-zinc-900 border-t border-zinc-800 p-4">
-        <div className="flex gap-3 items-end max-w-3xl mx-auto">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={e => {
-              setInput(e.target.value)
-              autoResizeTextarea()
-            }}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading || isEnding}
-            placeholder="Nhập tin nhắn... (Enter để gửi)"
-            maxLength={500}
-            rows={1}
-            className="flex-1 bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 disabled:opacity-50 transition-colors"
-            style={{ minHeight: '48px', maxHeight: '96px' }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={isLoading || isEnding || !input.trim()}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-3 text-sm font-medium transition-colors shrink-0"
-          >
-            Gửi
-          </button>
-        </div>
-        <div className="text-right text-xs text-zinc-600 mt-1 max-w-3xl mx-auto pr-[72px]">
-          {input.length}/500
-        </div>
+        {isEnded ? (
+          <div className="max-w-3xl mx-auto text-center text-sm text-zinc-500 py-2">
+            Chat đã kết thúc — đây là bản xem lại
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-3 items-end max-w-3xl mx-auto">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={e => {
+                  setInput(e.target.value)
+                  autoResizeTextarea()
+                }}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading || isEnding}
+                placeholder="Nhập tin nhắn... (Enter để gửi)"
+                maxLength={500}
+                rows={1}
+                className="flex-1 bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-600 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 disabled:opacity-50 transition-colors"
+                style={{ minHeight: '48px', maxHeight: '96px' }}
+              />
+              <button
+                onClick={handleSend}
+                disabled={isLoading || isEnding || !input.trim()}
+                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl px-4 py-3 text-sm font-medium transition-colors shrink-0"
+              >
+                Gửi
+              </button>
+            </div>
+            <div className="text-right text-xs text-zinc-600 mt-1 max-w-3xl mx-auto pr-18">
+              {input.length}/500
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

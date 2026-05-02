@@ -16,13 +16,13 @@ Practice real-life Vietnamese conversation scenarios with AI characters that sta
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
-| Backend | Python 3.11, FastAPI, LangGraph |
-| LLM | OpenAI gpt-4o (role-player + coach agents) |
-| Database & Auth | Supabase (PostgreSQL + Auth) |
-| Hosting | Vercel (frontend) · Railway (backend) · Supabase (DB) |
+| Layer           | Technology                                                   |
+| --------------- | ------------------------------------------------------------ |
+| Frontend        | Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
+| Backend         | Python 3.11, FastAPI, LangGraph                              |
+| LLM             | OpenAI gpt-4o (role-player + coach agents)                   |
+| Database & Auth | Supabase (PostgreSQL + Auth)                                 |
+| Hosting         | Vercel (frontend) · Railway (backend) · Supabase (DB)        |
 
 ## Architecture
 
@@ -170,15 +170,15 @@ conversation-gym/
 
 All endpoints (except `/health`) require `Authorization: Bearer <supabase_jwt>`.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Health check |
-| GET | `/api/situations` | List all scenarios |
-| POST | `/api/sessions` | Start a new session |
-| GET | `/api/sessions/{id}` | Get session + messages + persona |
-| POST | `/api/sessions/{id}/messages` | Send message, get AI reply |
-| POST | `/api/sessions/{id}/end` | End session, generate feedback |
-| GET | `/api/sessions/{id}/feedback` | Retrieve saved feedback |
+| Method | Path                          | Description                      |
+| ------ | ----------------------------- | -------------------------------- |
+| GET    | `/health`                     | Health check                     |
+| GET    | `/api/situations`             | List all scenarios               |
+| POST   | `/api/sessions`               | Start a new session              |
+| GET    | `/api/sessions/{id}`          | Get session + messages + persona |
+| POST   | `/api/sessions/{id}/messages` | Send message, get AI reply       |
+| POST   | `/api/sessions/{id}/end`      | End session, generate feedback   |
+| GET    | `/api/sessions/{id}/feedback` | Retrieve saved feedback          |
 
 ## Database
 

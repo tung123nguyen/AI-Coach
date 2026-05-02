@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic-settings
+supabase
+python-jose[cryptography]
+openai
+langgraph
+langchain-openai

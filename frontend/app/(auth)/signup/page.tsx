@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -47,27 +48,22 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      {/* Background orbs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute -top-20 right-0 w-125 h-125 bg-blue-600/7 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 -left-20 w-100 h-100 bg-violet-600/6 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-10">
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block font-bold text-xl tracking-tight">
-            <span className="text-blue-400">Conv</span>Gym
+        <div className="text-center mb-10">
+          <Link href="/" className="inline-flex items-center gap-2 font-semibold text-xl tracking-tight">
+            <span>ConvGym</span>
+            <span className="w-3.5 h-3.5 bg-blue-600 rounded-sm inline-block" />
           </Link>
-          <p className="text-zinc-500 text-sm mt-2">Tạo tài khoản miễn phí</p>
+          <p className="text-zinc-500 text-sm mt-3">Tạo tài khoản miễn phí</p>
         </div>
 
         {/* Card */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl shadow-black/30">
+        <div className="bg-white/2 border border-white/10 rounded-2xl p-7">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-zinc-300">Tên của bạn</Label>
+              <Label htmlFor="name" className="text-zinc-300 text-sm">Tên của bạn</Label>
               <Input
                 id="name"
                 type="text"
@@ -76,11 +72,11 @@ export default function SignupPage() {
                 onChange={e => setName(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+                className="bg-white/4 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 h-11 rounded-xl"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-zinc-300">Email</Label>
+              <Label htmlFor="email" className="text-zinc-300 text-sm">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -89,11 +85,11 @@ export default function SignupPage() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+                className="bg-white/4 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 h-11 rounded-xl"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-zinc-300">Mật khẩu</Label>
+              <Label htmlFor="password" className="text-zinc-300 text-sm">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
@@ -102,7 +98,7 @@ export default function SignupPage() {
                 onChange={e => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50"
+                className="bg-white/4 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 h-11 rounded-xl"
               />
             </div>
 
@@ -123,12 +119,17 @@ export default function SignupPage() {
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Đang tạo tài khoản...
                 </span>
-              ) : 'Đăng ký'}
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  Đăng ký
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
             </Button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-zinc-500 mt-5">
+        <p className="text-center text-sm text-zinc-500 mt-6">
           Đã có tài khoản?{' '}
           <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
             Đăng nhập

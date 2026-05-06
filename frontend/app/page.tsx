@@ -1,241 +1,728 @@
+"use client";
+
 import Link from "next/link";
-import { MessageCircle, BarChart3, Repeat2, Fingerprint, Sparkles, ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Icon } from "@/components/icon";
+import Nav from "@/components/nav";
+import Footer from "@/components/footer";
 
-const features = [
-  {
-    icon: MessageCircle,
-    title: "AI Persona thật",
-    desc: "Đồng nghiệp mới, sếp thang máy, người date — mỗi AI có background, tính cách và cảm xúc riêng.",
-  },
-  {
-    icon: BarChart3,
-    title: "Feedback cụ thể",
-    desc: "Coach AI trích dẫn đúng câu bạn nói, giải thích tại sao tốt hay cần cải thiện — không nói chung chung.",
-  },
-  {
-    icon: Repeat2,
-    title: "Luyện mỗi ngày",
-    desc: "5 tình huống từ dễ đến khó. Mỗi session 5 phút. Luyện đều đặn, phản xạ tự khắc tốt lên.",
-  },
-];
+function useInViewKey() {
+  const ref = useRef<HTMLHeadingElement>(null);
+  const [animKey, setKey] = useState(0);
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setKey((k) => k + 1);
+        });
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, animKey };
+}
 
-const preview = [
-  {
-    sender: "ai",
-    text: "Chào anh! Em là Hằng, mới chuyển team từ tuần trước. Anh làm bên Engineering nhỉ?",
-  },
-  {
-    sender: "user",
-    text: "Ừ đúng rồi, mình làm backend. Hằng chuyển từ team nào vậy?",
-  },
-  {
-    sender: "ai",
-    text: "Em từ Marketing ạ 😊 Anh hay dùng ngôn ngữ gì? Em tò mò lắm!",
-  },
-];
+function Hero() {
+  const { ref, animKey } = useInViewKey();
+  return (
+    <section
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        padding: "64px 24px 144px",
+        textAlign: "center",
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: "var(--gradient-hero)",
+        }}
+      />
+      <div style={{ position: "relative", margin: "0 auto", maxWidth: 1024 }}>
+        <div
+          style={{
+            margin: "0 auto 32px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            borderRadius: 999,
+            border: "1px solid var(--border)",
+            background: "oklch(0.16 0.02 260 / 0.6)",
+            backdropFilter: "blur(8px)",
+            padding: "6px 16px",
+            fontSize: 12,
+            color: "var(--muted-foreground)",
+          }}
+        >
+          <span
+            style={{
+              height: 6,
+              width: 6,
+              borderRadius: 999,
+              background: "var(--primary)",
+            }}
+          />
+          The agentic AI era is here
+        </div>
+        <h1
+          ref={ref}
+          style={{
+            margin: "0 auto",
+            maxWidth: 960,
+            fontSize: "clamp(40px, 6vw, 76px)",
+            fontWeight: 600,
+            lineHeight: 1.05,
+            letterSpacing: "-0.02em",
+            color: "var(--muted-foreground)",
+          }}
+        >
+          The future of learning
+          <br />
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              verticalAlign: "middle",
+            }}
+          >
+            is
+          </span>{" "}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              verticalAlign: "middle",
+              overflow: "hidden",
+            }}
+          >
+            <Icon
+              name="fingerprint"
+              size={56}
+              strokeWidth={1.5}
+              style={{ color: "var(--primary)" }}
+            />
+            <span
+              key={`h-${animKey}`}
+              className="animate-rise-up"
+              style={{ color: "var(--foreground)" }}
+            >
+              human
+            </span>
+          </span>{" "}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              verticalAlign: "middle",
+              color: "var(--foreground)",
+            }}
+          >
+            +
+          </span>{" "}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              verticalAlign: "middle",
+            }}
+          >
+            <Icon
+              name="sparkles"
+              size={56}
+              strokeWidth={1.5}
+              style={{ color: "var(--primary)" }}
+            />
+            <span
+              key={`a-${animKey}`}
+              className="animate-slide-in-from-right"
+              style={{ color: "var(--foreground)" }}
+            >
+              agentic AI
+            </span>
+          </span>
+        </h1>
+        <p
+          style={{
+            margin: "32px auto 0",
+            maxWidth: 640,
+            fontSize: 18,
+            color: "var(--muted-foreground)",
+            lineHeight: 1.6,
+          }}
+        >
+          Master the craft of communicating with AI. Practice real scenarios
+          with an always-available coach, and ship the soft skills to real
+          world.
+        </p>
+        <div
+          style={{
+            marginTop: 40,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+            justifyContent: "center",
+          }}
+        >
+          <Link
+            href="/home"
+            className="glow-border"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 8,
+              background: "var(--primary)",
+              padding: "14px 28px",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--primary-foreground)",
+              boxShadow: "var(--shadow-glow)",
+            }}
+          >
+            <span>Start Practicing</span> <Icon name="arrow-right" size={16} />
+          </Link>
+          <a
+            href="#curriculum"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--secondary)",
+              padding: "14px 28px",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--foreground)",
+            }}
+          >
+            Explore Curriculum
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LogoStrip() {
+  const logos = [
+    "NORTHWIND",
+    "ACME CORP",
+    "HELIOS",
+    "VANTAGE",
+    "QUANTAGRID",
+    "MERIDIAN",
+  ];
+  return (
+    <section
+      style={{
+        borderTop: "1px solid var(--border)",
+        borderBottom: "1px solid var(--border)",
+        padding: "40px 24px",
+      }}
+    >
+      <p
+        style={{
+          margin: "0 0 24px",
+          textAlign: "center",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: "0.2em",
+          color: "var(--muted-foreground)",
+        }}
+      >
+        Trusted by engineering teams at
+      </p>
+      <div
+        style={{
+          margin: "0 auto",
+          maxWidth: 1024,
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: "16px 48px",
+        }}
+      >
+        {logos.map((l) => (
+          <span
+            key={l}
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: "0.2em",
+              color: "oklch(0.65 0.02 260 / 0.7)",
+            }}
+          >
+            {l}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        borderRadius: 12,
+        border: `1px solid ${hover ? "oklch(0.65 0.21 255 / 0.4)" : "var(--border)"}`,
+        background: "var(--card)",
+        padding: 28,
+        transition: "border-color 0.2s",
+      }}
+    >
+      <div
+        style={{
+          marginBottom: 20,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 44,
+          width: 44,
+          borderRadius: 8,
+          background: "oklch(0.65 0.21 255 / 0.1)",
+          color: "var(--primary)",
+        }}
+      >
+        <Icon name={icon} size={20} />
+      </div>
+      <h3
+        style={{
+          margin: "0 0 8px",
+          fontSize: 18,
+          fontWeight: 600,
+          color: "var(--foreground)",
+        }}
+      >
+        {title}
+      </h3>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 14,
+          lineHeight: 1.6,
+          color: "var(--muted-foreground)",
+        }}
+      >
+        {desc}
+      </p>
+    </div>
+  );
+}
+
+function Features() {
+  const features = [
+    {
+      icon: "message-square",
+      title: "Conversation practice",
+      desc: "Real-world scenarios — design briefs, code reviews, customer comms — practiced with an AI partner that never tires.",
+    },
+    {
+      icon: "graduation-cap",
+      title: "Skill mapping for AI-native teams",
+      desc: "Benchmark every member against the agentic communication skill graph and surface gaps before they slow you down.",
+    },
+    {
+      icon: "shield-check",
+      title: "Evals & feedback",
+      desc: "Standardized rubrics for prompting, framing, and follow-ups. Promote skills with confidence.",
+    },
+    {
+      icon: "workflow",
+      title: "Enterprise analytics",
+      desc: "Cohort dashboards, role readiness, and progress signals piped into your HRIS and skills system.",
+    },
+  ];
+  return (
+    <section style={{ padding: "128px 24px" }}>
+      <div style={{ margin: "0 auto", maxWidth: 1152 }}>
+        <div style={{ marginBottom: 56, maxWidth: 640 }}>
+          <p
+            style={{
+              margin: "0 0 12px",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.2em",
+              color: "var(--primary)",
+            }}
+          >
+            Platform
+          </p>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "clamp(28px, 4vw, 48px)",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "var(--foreground)",
+            }}
+          >
+            Everything your team needs to communicate fluently with AI.
+          </h2>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gap: 20,
+            gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          }}
+        >
+          {features.map((f) => (
+            <FeatureCard
+              key={f.title}
+              icon={f.icon}
+              title={f.title}
+              desc={f.desc}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CurriculumCard({
+  t,
+}: {
+  t: {
+    icon: string;
+    title: string;
+    level: string;
+    modules: number;
+    desc: string;
+  };
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        background: hover ? "var(--secondary)" : "var(--card)",
+        padding: 28,
+        transition: "background 0.2s",
+        cursor: "pointer",
+      }}
+    >
+      <div
+        style={{
+          marginBottom: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 40,
+            width: 40,
+            borderRadius: 8,
+            background: "oklch(0.65 0.21 255 / 0.1)",
+            color: "var(--primary)",
+          }}
+        >
+          <Icon name={t.icon} size={18} />
+        </div>
+        <span
+          style={{
+            borderRadius: 999,
+            border: "1px solid var(--border)",
+            padding: "2px 10px",
+            fontSize: 10,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--muted-foreground)",
+          }}
+        >
+          {t.level}
+        </span>
+      </div>
+      <h3
+        style={{
+          margin: "0 0 8px",
+          fontSize: 16,
+          fontWeight: 600,
+          color: "var(--foreground)",
+        }}
+      >
+        {t.title}
+      </h3>
+      <p
+        style={{
+          margin: "0 0 20px",
+          fontSize: 14,
+          lineHeight: 1.6,
+          color: "var(--muted-foreground)",
+        }}
+      >
+        {t.desc}
+      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontSize: 12,
+          color: "var(--muted-foreground)",
+        }}
+      >
+        <span>{t.modules} modules</span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            color: "var(--primary)",
+          }}
+        >
+          View track <Icon name="arrow-right" size={12} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Curriculum() {
+  const tracks = [
+    {
+      icon: "sparkles",
+      title: "Foundations of prompting",
+      level: "Core",
+      modules: 8,
+      desc: "How LLMs read, what context windows really mean, and the anatomy of a great prompt.",
+    },
+    {
+      icon: "message-square",
+      title: "Framing & intent",
+      level: "Core",
+      modules: 6,
+      desc: "Stating goals, constraints, and acceptance criteria so models stay on the rails.",
+    },
+    {
+      icon: "database",
+      title: "Working with knowledge",
+      level: "Intermediate",
+      modules: 7,
+      desc: "Pasting context, citing sources, and getting grounded answers you can verify.",
+    },
+    {
+      icon: "bot",
+      title: "Conversational repair",
+      level: "Intermediate",
+      modules: 5,
+      desc: "Recovering from drift, recalibrating, and steering long sessions back to the goal.",
+    },
+    {
+      icon: "shield-check",
+      title: "Evals & safety",
+      level: "Intermediate",
+      modules: 5,
+      desc: "Spotting hallucinations, structuring follow-ups, and guarding sensitive flows.",
+    },
+    {
+      icon: "rocket",
+      title: "Production conversations",
+      level: "Advanced",
+      modules: 8,
+      desc: "Patterns for code reviews, customer support, and design crit at production scale.",
+    },
+  ];
+  return (
+    <section id="curriculum" style={{ padding: "128px 24px" }}>
+      <div style={{ margin: "0 auto", maxWidth: 1152 }}>
+        <div
+          style={{
+            marginBottom: 56,
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 24,
+          }}
+        >
+          <div style={{ maxWidth: 640 }}>
+            <p
+              style={{
+                margin: "0 0 12px",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.2em",
+                color: "var(--primary)",
+              }}
+            >
+              Curriculum
+            </p>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "clamp(28px, 4vw, 48px)",
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Learning paths from first prompt to production conversations.
+            </h2>
+          </div>
+          <p
+            style={{
+              maxWidth: 360,
+              fontSize: 14,
+              color: "var(--muted-foreground)",
+            }}
+          >
+            Six tracks, 40+ hands-on situations, calibrated for builders, leads,
+            and platform teams.
+          </p>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gap: 1,
+            overflow: "hidden",
+            borderRadius: 12,
+            border: "1px solid var(--border)",
+            background: "var(--border)",
+            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          }}
+        >
+          {tracks.map((t) => (
+            <CurriculumCard key={t.title} t={t} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CtaBand() {
+  return (
+    <section style={{ padding: "128px 24px" }}>
+      <div
+        style={{
+          position: "relative",
+          margin: "0 auto",
+          maxWidth: 1024,
+          overflow: "hidden",
+          borderRadius: 16,
+          border: "1px solid var(--border)",
+          background: "var(--card)",
+          padding: "96px 64px",
+          textAlign: "center",
+          backgroundImage: "var(--gradient-hero)",
+        }}
+      >
+        <h2
+          style={{
+            margin: "0 auto",
+            maxWidth: 640,
+            fontSize: "clamp(28px, 4vw, 48px)",
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Train the way your team will actually work.
+        </h2>
+        <p
+          style={{
+            margin: "20px auto 0",
+            maxWidth: 540,
+            fontSize: 16,
+            color: "var(--muted-foreground)",
+          }}
+        >
+          Practice the awkward standup, the fuzzy spec, the tough customer email
+          — with an AI coach that meets you where you are.
+        </p>
+        <div
+          style={{
+            marginTop: 40,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+            justifyContent: "center",
+          }}
+        >
+          <Link
+            href="/home"
+            className="glow-border"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 8,
+              background: "var(--primary)",
+              padding: "14px 28px",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--primary-foreground)",
+              boxShadow: "var(--shadow-glow)",
+            }}
+          >
+            <span>Start Practicing</span> <Icon name="arrow-right" size={16} />
+          </Link>
+          <a
+            href="#"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--secondary)",
+              padding: "14px 28px",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--foreground)",
+            }}
+          >
+            Download Overview
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const mainStyle: CSSProperties = {
+  minHeight: "100vh",
+  background: "var(--background)",
+  color: "var(--foreground)",
+};
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between max-w-7xl mx-auto px-6 py-5">
-        <div className="flex items-center gap-10">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-lg tracking-tight">
-            <span>ConvGym</span>
-            <span className="w-3.5 h-3.5 bg-blue-600 rounded-sm inline-block" />
-          </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-zinc-400">
-            <a href="#features" className="hover:text-white transition-colors">Tính năng</a>
-            <a href="#demo" className="hover:text-white transition-colors">Demo</a>
-            <a href="#how" className="hover:text-white transition-colors">Cách dùng</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Giá</a>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="hidden sm:inline-flex text-sm text-zinc-400 hover:text-white transition-colors px-3 py-2"
-          >
-            Đăng nhập
-          </Link>
-          <Link
-            href="/login"
-            className="text-sm font-medium border border-white/15 hover:border-white/30 text-white px-4 py-2 rounded-lg transition-colors bg-white/2 hover:bg-white/6"
-          >
-            Request Demo
-          </Link>
-          <Link
-            href="/signup"
-            className="text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Bắt đầu
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-24 text-center">
-        <div className="inline-flex items-center gap-2 bg-white/4 border border-white/10 text-zinc-300 text-xs font-medium px-3 py-1.5 rounded-full mb-10">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
-          Kỷ nguyên giao tiếp với AI đã bắt đầu
-        </div>
-
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight mb-8">
-          <span className="text-zinc-500 block">Tương lai của giao tiếp</span>
-          <span className="inline-flex items-center gap-3 sm:gap-5 flex-wrap justify-center">
-            <span className="text-zinc-500">là</span>
-            <Fingerprint className="w-10 h-10 sm:w-14 sm:h-14 text-blue-500 shrink-0" strokeWidth={1.75} />
-            <span className="text-white">con người</span>
-            <span className="text-zinc-500">+</span>
-            <Sparkles className="w-10 h-10 sm:w-14 sm:h-14 text-blue-500 shrink-0" strokeWidth={1.75} />
-            <span className="text-white">AI personas</span>
-          </span>
-        </h1>
-
-        <p className="text-lg text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Phòng tập giao tiếp với AI personas thật — chat tự nhiên, nhận feedback từng câu,
-          và biến &ldquo;không biết nói gì&rdquo; thành phản xạ tự nhiên trong 5 phút mỗi ngày.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/signup"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
-          >
-            Bắt đầu miễn phí
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <a
-            href="#demo"
-            className="inline-flex items-center justify-center px-6 py-3.5 bg-white/3 hover:bg-white/8 border border-white/10 hover:border-white/20 text-white font-medium rounded-xl transition-colors"
-          >
-            Xem demo
-          </a>
-        </div>
-      </section>
-
-      {/* Demo / chat preview */}
-      <section id="demo" className="relative z-10 max-w-3xl mx-auto px-6 pb-28">
-        <div className="text-center mb-10">
-          <p className="text-xs font-medium uppercase tracking-widest text-blue-500 mb-3">Live preview</p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Chat thật. Feedback thật.
-          </h2>
-        </div>
-
-        <div className="bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-blue-950/20">
-          {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/10 bg-white/2">
-            <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
-              H
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white">Hằng</p>
-              <p className="text-xs text-zinc-500">Đồng nghiệp mới · Marketing</p>
-            </div>
-            <div className="ml-auto flex items-center gap-1.5 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-xs text-zinc-500">Live</span>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="p-5 space-y-3">
-            {preview.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[82%] px-4 py-2.5 text-sm leading-relaxed ${
-                    msg.sender === "user"
-                      ? "bg-blue-600 text-white rounded-2xl rounded-br-sm"
-                      : "bg-white/6 text-zinc-100 rounded-2xl rounded-bl-sm"
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Feedback */}
-          <div className="mx-5 mb-5 p-3.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-            <p className="text-xs font-semibold text-blue-400 mb-1 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Feedback từ Coach AI
-            </p>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              Tin số 2: &lsquo;Hằng chuyển từ team nào vậy?&rsquo; — Hỏi lại ngay, rất tự nhiên. Tiếp tục giữ nhịp này!
-            </p>
-          </div>
-
-          {/* Input */}
-          <div className="px-5 pb-5">
-            <div className="flex items-center gap-2 bg-white/4 border border-white/10 rounded-xl px-4 py-2.5">
-              <span className="text-sm text-zinc-500 flex-1 select-none">Nhập tin nhắn...</span>
-              <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
-                <ArrowRight className="w-3.5 h-3.5 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="relative z-10 max-w-6xl mx-auto px-6 pb-28">
-        <div className="text-center mb-14">
-          <p className="text-xs font-medium uppercase tracking-widest text-blue-500 mb-3">Tại sao ConvGym</p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl mx-auto">
-            Luyện giao tiếp như đi gym — đều đặn, có feedback, tiến bộ thật.
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {features.map((f, i) => (
-            <div
-              key={i}
-              className="group bg-white/2 hover:bg-white/4 border border-white/10 hover:border-white/20 rounded-2xl p-7 transition-all"
-            >
-              <div className="w-11 h-11 bg-blue-500/10 group-hover:bg-blue-500/20 rounded-xl flex items-center justify-center mb-5 transition-colors">
-                <f.icon className="w-5 h-5 text-blue-500" />
-              </div>
-              <h3 className="font-semibold text-white mb-2 text-base">{f.title}</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="relative z-10 max-w-4xl mx-auto px-6 pb-28">
-        <div className="bg-linear-to-br from-blue-600/15 via-blue-600/5 to-transparent border border-blue-500/20 rounded-3xl p-12 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Sẵn sàng cho buổi tập đầu tiên?
-          </h2>
-          <p className="text-zinc-400 mb-8 max-w-md mx-auto">
-            Miễn phí. 5 phút. Không cần thẻ tín dụng.
-          </p>
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2 px-7 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
-          >
-            Bắt đầu miễn phí
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-zinc-600">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-zinc-400">ConvGym</span>
-            <span className="w-2 h-2 bg-blue-600 rounded-sm inline-block" />
-          </div>
-          <span>Conversation Gym · 2026</span>
-        </div>
-      </footer>
-    </div>
+    <main style={mainStyle}>
+      <Nav current="home" />
+      <Hero />
+      <LogoStrip />
+      <Features />
+      <Curriculum />
+      <CtaBand />
+      <Footer />
+    </main>
   );
 }

@@ -1,12 +1,28 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { api } from '@/lib/api'
-import { Message, Persona } from '@/lib/types'
-import ChatMessage from '@/components/chat-message'
+import { Message, Persona, Situation } from '@/lib/types'
+import { Icon } from '@/components/icon'
+import Nav from '@/components/nav'
+
+const GLYPH = 'bot'
+const ACCENT = 'oklch(0.65 0.21 255)'
+
+const iconBtn: CSSProperties = {
+  height: 36, width: 36, borderRadius: 999,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  border: '1px solid var(--border)', background: 'transparent',
+  color: 'var(--muted-foreground)',
+}
+
+const composerIcon: CSSProperties = {
+  height: 34, width: 34, borderRadius: 999,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  border: 0, background: 'transparent', color: 'var(--muted-foreground)',
+}
 
 interface ChatClientProps {
   sessionId: string
@@ -19,45 +35,38 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
   const router = useRouter()
   const isEnded = sessionStatus === 'ended'
   const [messages, setMessages] = useState<Message[]>(initialMessages)
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [typing, setTyping] = useState(false)
   const [isEnding, setIsEnding] = useState(false)
   const [error, setError] = useState('')
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [situations, setSituations] = useState<Situation[]>([])
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+    api.getSituations()
+      .then((data: Situation[]) => setSituations(data))
+      .catch(() => {})
+  }, [])
 
-  function autoResizeTextarea() {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    const lineHeight = 24
-    const maxHeight = lineHeight * 3 + 24
-    el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
-  }
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, typing])
 
-  async function handleSend() {
-    const content = input.trim()
-    if (!content || isLoading) return
-
-    const optimisticMsg: Message = {
+  async function send(text: string) {
+    const t = text.trim()
+    if (!t || typing || isEnded) return
+    const optimistic: Message = {
       id: `temp-${Date.now()}`,
       sender: 'user',
-      content,
+      content: t,
       created_at: new Date().toISOString(),
     }
-
-    setMessages(prev => [...prev, optimisticMsg])
-    setInput('')
-    if (textareaRef.current) textareaRef.current.style.height = 'auto'
-    setIsLoading(true)
+    setMessages(prev => [...prev, optimistic])
+    setTyping(true)
     setError('')
-
     try {
-      const data = await api.sendMessage(sessionId, content)
+      const data = await api.sendMessage(sessionId, t)
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         sender: 'ai',
@@ -66,145 +75,464 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
       }
       setMessages(prev => [...prev, aiMsg])
     } catch (err) {
-      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
-      setError(err instanceof Error ? err.message : 'Gửi tin thất bại. Thử lại.')
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id))
+      setError(err instanceof Error ? err.message : 'Send failed. Try again.')
     } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+      setTyping(false)
     }
   }
 
   async function handleEnd() {
-    if (!window.confirm('Bạn chắc chắn muốn kết thúc?')) return
+    if (!window.confirm('End this session?')) return
     setIsEnding(true)
     try {
       await api.endSession(sessionId)
       router.push(`/feedback/${sessionId}`)
     } catch {
-      setError('Không thể kết thúc session. Thử lại.')
+      setError('Could not end session. Try again.')
       setIsEnding(false)
     }
   }
 
+  async function handlePickSituation(id: string) {
+    try {
+      const data = await api.createSession(id)
+      router.push(`/chat/${data.session_id}`)
+    } catch {
+      setError('Could not start session.')
+    }
+  }
+
+  const personaName = persona?.name || 'AI'
+  const subtitle = isEnded ? 'Ended session' : 'Practice session'
+
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
-      {/* Top bar */}
-      <div className="sticky top-0 bg-black/80 backdrop-blur-sm border-b border-white/10 z-10 px-4 py-3">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/home"
-              className="text-zinc-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
-              aria-label="Quay lại"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
-              {persona?.name?.charAt(0) || '?'}
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--background)' }}>
+      <Nav current="practice" />
+      <div style={{
+        flex: 1,
+        display: 'grid',
+        gridTemplateColumns: '320px 1fr 320px',
+        minHeight: 'calc(100vh - 80px)',
+        borderTop: '1px solid var(--border)',
+      }}>
+        <Sidebar
+          situations={situations}
+          onPick={handlePickSituation}
+          activePersonaName={personaName}
+        />
+        <main style={{ display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--background)' }}>
+          <ChatHeader
+            personaName={personaName}
+            subtitle={subtitle}
+            isEnded={isEnded}
+            isEnding={isEnding}
+            onEnd={handleEnd}
+            sessionId={sessionId}
+          />
+          <div ref={scrollRef} style={{
+            flex: 1, overflowY: 'auto',
+            padding: '24px 28px',
+            display: 'flex', flexDirection: 'column', gap: 14,
+          }}>
+            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.18em', padding: '4px 0 8px' }}>
+              Practice session · {subtitle}
             </div>
-            <div>
-              <div className="text-sm font-semibold text-white">{persona?.name || 'AI'}</div>
-              <div className="text-xs text-zinc-500 flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${isEnded ? 'bg-zinc-500' : 'bg-green-400'}`} />
-                {isEnded ? 'Đã kết thúc' : 'Đang chat'}
-              </div>
-            </div>
+            {messages.map(m => <MessageBubble key={m.id} m={m} />)}
+            {typing && <TypingIndicator />}
+            {error && (
+              <div className="fade-in" style={{
+                alignSelf: 'center', fontSize: 12,
+                padding: '8px 14px', borderRadius: 999,
+                border: '1px solid oklch(0.6 0.245 27 / 0.3)',
+                background: 'oklch(0.6 0.245 27 / 0.1)', color: 'oklch(0.8 0.15 27)',
+              }}>{error}</div>
+            )}
           </div>
-          {isEnded ? (
-            <Link
-              href={`/feedback/${sessionId}`}
-              className="inline-flex items-center gap-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg px-3.5 py-2 transition-colors"
-            >
-              Xem feedback
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          ) : (
-            <button
-              onClick={handleEnd}
-              disabled={isEnding}
-              className="text-sm text-zinc-300 hover:text-white border border-white/10 hover:border-white/20 bg-white/2 hover:bg-white/6 rounded-lg px-3.5 py-2 transition-colors disabled:opacity-50"
-            >
-              {isEnding ? 'Đang kết thúc...' : 'Kết thúc'}
-            </button>
-          )}
+          <Composer onSend={send} disabled={isEnded || typing || isEnding} />
+        </main>
+        <InfoPanel personaName={personaName} />
+      </div>
+    </div>
+  )
+}
+
+function ChatHeader({
+  personaName,
+  subtitle,
+  isEnded,
+  isEnding,
+  onEnd,
+  sessionId,
+}: {
+  personaName: string
+  subtitle: string
+  isEnded: boolean
+  isEnding: boolean
+  onEnd: () => void
+  sessionId: string
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 16,
+      padding: '16px 24px',
+      borderBottom: '1px solid var(--border)',
+      background: 'oklch(0.06 0.01 260 / 0.85)',
+      backdropFilter: 'blur(12px)',
+      position: 'sticky', top: 0, zIndex: 5,
+    }}>
+      <Link href="/home" style={{
+        ...iconBtn,
+        background: 'var(--secondary)', color: 'var(--foreground)',
+      }} aria-label="Back">
+        <Icon name="arrow-left" size={16} />
+      </Link>
+      <div style={{
+        position: 'relative',
+        height: 44, width: 44, borderRadius: 12,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        backgroundColor: 'oklch(0.65 0.21 255 / 0.14)',
+        border: `1px solid ${ACCENT}`,
+        color: ACCENT,
+      }}>
+        <Icon name={GLYPH} size={20} strokeWidth={1.5} />
+        <span style={{
+          position: 'absolute', bottom: -2, right: -2,
+          height: 12, width: 12, borderRadius: 999,
+          background: isEnded ? 'var(--muted-foreground)' : 'oklch(0.7 0.15 145)',
+          border: '2px solid var(--background)',
+        }} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 600 }}>
+          {personaName}
+          <Icon name="badge-check" size={14} style={{ color: 'var(--primary)' }} />
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+          <span style={{ color: isEnded ? 'var(--muted-foreground)' : 'oklch(0.7 0.15 145)' }}>●</span> {isEnded ? 'Ended' : 'Active'} · {subtitle}
         </div>
       </div>
+      {isEnded ? (
+        <Link href={`/feedback/${sessionId}`} style={{
+          ...iconBtn, width: 'auto', padding: '0 14px', gap: 6,
+          background: 'var(--primary)', color: 'var(--primary-foreground)', border: 0,
+          fontSize: 13, fontWeight: 500,
+        }}>
+          Feedback <Icon name="arrow-right" size={14} />
+        </Link>
+      ) : (
+        <button onClick={onEnd} disabled={isEnding} style={{
+          ...iconBtn, width: 'auto', padding: '0 14px',
+          fontSize: 13, color: 'var(--foreground)', background: 'var(--secondary)',
+        }}>
+          {isEnding ? 'Ending…' : 'End'}
+        </button>
+      )}
+      <button style={iconBtn} aria-label="Info"><Icon name="info" size={16} /></button>
+      <button style={iconBtn} aria-label="More"><Icon name="more-horizontal" size={16} /></button>
+    </div>
+  )
+}
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-1">
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} />
-          ))}
+function Sidebar({
+  situations,
+  onPick,
+  activePersonaName,
+}: {
+  situations: Situation[]
+  onPick: (id: string) => void
+  activePersonaName: string
+}) {
+  const [search, setSearch] = useState('')
+  const filtered = situations.filter(s =>
+    !search || s.name.toLowerCase().includes(search.toLowerCase())
+  )
+  return (
+    <aside style={{
+      width: 320, borderRight: '1px solid var(--border)',
+      display: 'flex', flexDirection: 'column',
+      background: 'oklch(0.07 0.012 260)',
+    }}>
+      <div style={{ padding: '20px 20px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Sessions</h2>
+        <Link href="/home" style={{ ...iconBtn, height: 32, width: 32 }} aria-label="New session">
+          <Icon name="square-pen" size={14} />
+        </Link>
+      </div>
+      <div style={{ padding: '0 20px 12px' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '8px 12px', borderRadius: 999,
+          background: 'var(--secondary)', border: '1px solid var(--border)',
+          color: 'var(--muted-foreground)', fontSize: 13,
+        }}>
+          <Icon name="search" size={14} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search sessions"
+            style={{
+              background: 'transparent', border: 0, outline: 'none', flex: 1,
+              color: 'var(--foreground)', fontSize: 13, fontFamily: 'inherit',
+            }}
+          />
+        </div>
+      </div>
+      <div style={{ padding: '0 20px 8px', display: 'flex', gap: 18, fontSize: 13 }}>
+        {['All', 'Active', 'Saved'].map((t, i) => (
+          <span key={t} style={{
+            color: i === 0 ? 'var(--primary)' : 'var(--muted-foreground)',
+            paddingBottom: 6,
+            borderBottom: i === 0 ? '1px solid var(--primary)' : '1px solid transparent',
+            cursor: 'pointer', fontWeight: i === 0 ? 600 : 400,
+          }}>{t}</span>
+        ))}
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px 16px' }}>
+        {filtered.map(s => {
+          const isActive = s.persona_data?.name === activePersonaName
+          return (
+            <SidebarItem key={s.id} situation={s} isActive={isActive} onPick={() => onPick(s.id)} />
+          )
+        })}
+      </div>
+    </aside>
+  )
+}
 
-          {isLoading && (
-            <div className="flex justify-start mb-1">
-              <div className="bg-white/6 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[75%]">
-                <div className="flex gap-1 items-center h-5">
-                  <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                </div>
-              </div>
-            </div>
-          )}
+function SidebarItem({
+  situation,
+  isActive,
+  onPick,
+}: {
+  situation: Situation
+  isActive: boolean
+  onPick: () => void
+}) {
+  const [hover, setHover] = useState(false)
+  const bg = isActive ? 'var(--secondary)' : (hover ? 'oklch(0.12 0.018 260)' : 'transparent')
+  return (
+    <button
+      onClick={onPick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', gap: 12, alignItems: 'center',
+        width: '100%', padding: 12,
+        borderRadius: 10, border: 0,
+        background: bg,
+        color: 'var(--foreground)', textAlign: 'left',
+        transition: 'background 0.15s',
+      }}
+    >
+      <div style={{
+        height: 40, width: 40, borderRadius: 10, flexShrink: 0,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: 'oklch(0.65 0.21 255 / 0.12)',
+        border: '1px solid oklch(0.65 0.21 255 / 0.25)',
+        color: ACCENT,
+        fontSize: 18, lineHeight: 1,
+      }}>
+        {situation.emoji}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{situation.name}</div>
+        <div style={{ fontSize: 12, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {situation.persona_data?.name || 'AI partner'}
+        </div>
+      </div>
+    </button>
+  )
+}
 
-          {error && (
-            <div className="flex justify-center py-2">
-              <span className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-1.5">
-                ⚠ {error}
+function InfoPanel({ personaName }: { personaName: string }) {
+  return (
+    <aside style={{
+      width: 320, borderLeft: '1px solid var(--border)',
+      padding: 24, display: 'flex', flexDirection: 'column', gap: 24,
+      background: 'oklch(0.07 0.012 260)',
+      overflowY: 'auto',
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div style={{
+          height: 88, width: 88, borderRadius: 22,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          background: 'oklch(0.65 0.21 255 / 0.14)',
+          border: '1px solid oklch(0.65 0.21 255 / 0.3)',
+          color: ACCENT,
+        }}>
+          <Icon name={GLYPH} size={36} strokeWidth={1.4} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 18, fontWeight: 600 }}>
+          {personaName}
+          <Icon name="badge-check" size={14} style={{ color: 'var(--primary)' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 24, marginTop: 4 }}>
+          {[
+            { icon: 'bell-off', label: 'Mute' },
+            { icon: 'search', label: 'Search' },
+            { icon: 'pin', label: 'Pin' },
+          ].map(a => (
+            <div key={a.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: 'var(--muted-foreground)', fontSize: 12 }}>
+              <span style={{
+                height: 36, width: 36, borderRadius: 999,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                border: '1px solid var(--border)',
+              }}>
+                <Icon name={a.icon} size={14} />
               </span>
+              {a.label}
             </div>
-          )}
-
-          <div ref={messagesEndRef} />
+          ))}
         </div>
       </div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Coach info</div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--card)' }}>
+          <Icon name="sparkles" size={16} style={{ color: 'var(--primary)', marginTop: 2 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>Adaptive feedback</div>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 4, lineHeight: 1.5 }}>
+              Responses are generated by AI. The coach evaluates clarity, framing, and follow-up — not correctness of facts.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Privacy & support</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {[
+            { icon: 'bell-off', label: 'Mute notifications' },
+            { icon: 'shield-check', label: 'Safety controls' },
+            { icon: 'archive', label: 'Archive session' },
+          ].map(it => (
+            <div key={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px', fontSize: 13.5, color: 'var(--foreground)' }}>
+              <Icon name={it.icon} size={15} style={{ color: 'var(--muted-foreground)' }} />
+              {it.label}
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  )
+}
 
-      {/* Input bar */}
-      <div className="sticky bottom-0 bg-black/80 backdrop-blur-sm border-t border-white/10 px-4 py-4">
-        {isEnded ? (
-          <div className="max-w-3xl mx-auto text-center text-sm text-zinc-500 py-2">
-            Chat đã kết thúc — đây là bản xem lại
-          </div>
-        ) : (
-          <div className="max-w-3xl mx-auto">
-            <div className="flex gap-2 items-end bg-white/4 border border-white/10 rounded-2xl px-3 py-2 focus-within:border-blue-500/50 transition-colors">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={e => {
-                  setInput(e.target.value)
-                  autoResizeTextarea()
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading || isEnding}
-                placeholder="Nhập tin nhắn... (Enter để gửi)"
-                maxLength={500}
-                rows={1}
-                className="flex-1 bg-transparent text-white placeholder:text-zinc-600 px-2 py-2 text-sm resize-none focus:outline-none disabled:opacity-50"
-                style={{ minHeight: '36px', maxHeight: '96px' }}
-              />
-              <button
-                onClick={handleSend}
-                disabled={isLoading || isEnding || !input.trim()}
-                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg w-9 h-9 flex items-center justify-center transition-colors shrink-0"
-                aria-label="Gửi"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="text-right text-xs text-zinc-600 mt-1.5 pr-1">
-              {input.length}/500
-            </div>
-          </div>
-        )}
+function MessageBubble({ m }: { m: Message }) {
+  if (m.sender === 'user') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }} className="fade-in">
+        <div style={{
+          maxWidth: '70%',
+          padding: '12px 16px',
+          borderRadius: '18px 18px 4px 18px',
+          background: 'var(--primary)',
+          color: 'var(--primary-foreground)',
+          fontSize: 15, lineHeight: 1.5,
+          boxShadow: '0 1px 0 oklch(1 0 0 / 0.05)',
+          whiteSpace: 'pre-wrap',
+        }}>{m.content}</div>
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }} className="fade-in">
+      <div style={{
+        height: 32, width: 32, borderRadius: 999, flexShrink: 0,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: 'oklch(0.65 0.21 255 / 0.12)',
+        border: '1px solid oklch(0.65 0.21 255 / 0.3)',
+        color: ACCENT,
+      }}>
+        <Icon name={GLYPH} size={14} strokeWidth={1.6} />
+      </div>
+      <div style={{
+        maxWidth: '70%',
+        padding: '12px 16px',
+        borderRadius: '18px 18px 18px 4px',
+        background: 'var(--secondary)',
+        color: 'var(--foreground)',
+        fontSize: 15, lineHeight: 1.55,
+        whiteSpace: 'pre-wrap',
+        border: '1px solid var(--border)',
+      }}>{m.content}</div>
+    </div>
+  )
+}
+
+function TypingIndicator() {
+  return (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }} className="fade-in">
+      <div style={{
+        height: 32, width: 32, borderRadius: 999, flexShrink: 0,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: 'oklch(0.65 0.21 255 / 0.12)',
+        border: '1px solid oklch(0.65 0.21 255 / 0.3)',
+        color: ACCENT,
+      }}>
+        <Icon name={GLYPH} size={14} strokeWidth={1.6} />
+      </div>
+      <div style={{
+        padding: '14px 18px',
+        borderRadius: '18px 18px 18px 4px',
+        background: 'var(--secondary)',
+        border: '1px solid var(--border)',
+        display: 'flex', gap: 5, alignItems: 'center',
+      }}>
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{
+            height: 6, width: 6, borderRadius: 999,
+            background: 'var(--muted-foreground)',
+            animation: `typing 1.2s ${i * 0.15}s infinite ease-in-out`,
+          }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Composer({ onSend, disabled }: { onSend: (t: string) => void; disabled: boolean }) {
+  const [text, setText] = useState('')
+  const send = () => {
+    const t = text.trim()
+    if (!t) return
+    onSend(t)
+    setText('')
+  }
+  return (
+    <div style={{ padding: '12px 24px 20px', background: 'oklch(0.06 0.01 260)' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 14px',
+        borderRadius: 999,
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        opacity: disabled ? 0.6 : 1,
+      }}>
+        <button style={composerIcon} aria-label="Attach"><Icon name="image" size={18} /></button>
+        <button style={composerIcon} aria-label="Sticker"><Icon name="smile" size={18} /></button>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+          disabled={disabled}
+          placeholder="Practice your message..."
+          style={{
+            flex: 1, background: 'transparent', border: 0, outline: 'none',
+            color: 'var(--foreground)', fontSize: 15, fontFamily: 'inherit',
+            padding: '4px 0',
+          }}
+        />
+        <button onClick={send} disabled={disabled || !text.trim()} style={{
+          ...composerIcon,
+          background: text.trim() ? 'var(--primary)' : 'transparent',
+          color: text.trim() ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+          transition: 'background 0.15s',
+        }} aria-label="Send">
+          <Icon name="send-horizontal" size={16} />
+        </button>
+      </div>
+      <div style={{ marginTop: 8, fontSize: 11, color: 'var(--muted-foreground)', textAlign: 'center' }}>
+        AI coach · Responses are practice scaffolding, not professional advice.
       </div>
     </div>
   )

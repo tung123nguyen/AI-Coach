@@ -9,6 +9,8 @@ class Settings(BaseSettings):
 
     openai_api_key: str
     openai_model: str = "gpt-4o"
+    coach_model: str = "gpt-4o-mini"
+    feedback_model: str = "gpt-4o"
 
     port: int = 8000
     allowed_origins: str = "http://localhost:3000"

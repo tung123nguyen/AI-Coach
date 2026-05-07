@@ -40,7 +40,7 @@ QUY TẮC TUYỆT ĐỐI:
 
 
 # === ROLE PLAYER NODE ===
-def role_player_node(state: ChatState) -> Dict:
+async def role_player_node(state: ChatState) -> Dict:
     """Single node: generate AI response in character."""
 
     system_prompt = build_role_player_prompt(
@@ -65,7 +65,7 @@ def role_player_node(state: ChatState) -> Dict:
         temperature=0.8,
     )
 
-    response = llm.invoke(messages)
+    response = await llm.ainvoke(messages)
     return {"ai_response": response.content}
 
 
@@ -83,13 +83,13 @@ chat_graph = build_chat_graph()
 
 
 # === PUBLIC INTERFACE ===
-def run_chat(
+async def run_chat(
     persona: Dict,
     history: List[Dict],
     user_message: str,
     situation_description: str
 ) -> str:
-    """Run chat workflow, return AI response text."""
+    """Run chat workflow async, return AI response text."""
     initial_state: ChatState = {
         "persona": persona,
         "situation_description": situation_description,
@@ -98,5 +98,5 @@ def run_chat(
         "ai_response": "",
     }
 
-    final_state = chat_graph.invoke(initial_state)
+    final_state = await chat_graph.ainvoke(initial_state)
     return final_state["ai_response"]

@@ -12,10 +12,17 @@ export type Situation = {
   description: string
   difficulty: number
   category: string
-  emoji: string
+  image_situation?: string | null
   persona_data: Persona
   opening_line: string
   objectives?: Record<string, string>
+}
+
+export type CoachCard = {
+  severity: number  // 2 | 3
+  issue: string
+  suggestions: string[]
+  explanation: string
 }
 
 export type Message = {
@@ -23,6 +30,7 @@ export type Message = {
   sender: 'user' | 'ai'
   content: string
   created_at: string
+  coach_card?: CoachCard | null
 }
 
 export type Session = {

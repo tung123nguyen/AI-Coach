@@ -10,7 +10,7 @@ class SituationOut(BaseModel):
     description: str
     difficulty: int
     category: str
-    emoji: str
+    image_situation: Optional[str] = None
     persona_data: Dict[str, Any]
     opening_line: str
     objectives: Optional[Dict[str, Any]] = None
@@ -40,15 +40,25 @@ class SendMessageRequest(BaseModel):
     content: str = Field(..., min_length=1, max_length=500)
 
 
+class CoachCardOut(BaseModel):
+    severity: int  # 2 | 3 (severity 1 không hiện)
+    issue: str
+    suggestions: List[str]
+    explanation: str
+
+
 class MessageOut(BaseModel):
     id: str
     sender: str  # 'user' | 'ai'
     content: str
     created_at: datetime
+    coach_card: Optional[CoachCardOut] = None  # chỉ có ở user message
 
 
 class SendMessageResponse(BaseModel):
     ai_message: str
+    user_message_id: str
+    coach_card: Optional[CoachCardOut] = None  # null nếu Coach không can thiệp
 
 
 # === Feedback ===

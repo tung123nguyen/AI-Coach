@@ -11,7 +11,7 @@ interface NavProps {
 export default function Nav({ current }: NavProps) {
   const links = [
     { id: 'platform', label: 'Platform', href: '#' },
-    { id: 'solutions', label: 'Solutions', href: '#' },
+    { id: 'learn', label: 'Learn', href: '#' },
     { id: 'practice', label: 'Practice', href: '/home' },
     { id: 'pricing', label: 'Pricing', href: '#' },
   ]

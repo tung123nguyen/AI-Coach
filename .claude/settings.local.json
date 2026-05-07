@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import ast; [ast.parse\\(open\\(f, encoding='utf-8'\\).read\\(\\)\\) for f in ['app/agents/coach_graph.py','app/agents/chat_graph.py','app/agents/feedback_graph.py','app/routers/messages.py','app/routers/sessions.py','app/schemas.py','app/config.py']] and print\\('OK'\\)\")"
+    ]
+  }
+}

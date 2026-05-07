@@ -3,7 +3,7 @@ from app.auth import get_current_user
 from app.db import get_supabase
 from app.schemas import (
     CreateSessionRequest, SessionCreatedOut,
-    SessionFullOut, SessionDetailOut, MessageOut,
+    SessionFullOut, SessionDetailOut, MessageOut, CoachCardOut,
     FeedbackResponse, FeedbackOut, FeedbackCard
 )
 from app.agents.feedback_graph import generate_feedback
@@ -46,6 +46,12 @@ async def create_session(
     )
 
 
+def _coach_logs_by_message(sb, session_id: str) -> dict:
+    """Map message_id -> coach_log row cho 1 session."""
+    res = sb.table("coach_logs").select("*").eq("session_id", session_id).execute()
+    return {row["message_id"]: row for row in (res.data or [])}
+
+
 @router.get("/sessions/{session_id}", response_model=SessionFullOut)
 async def get_session(
     session_id: str,
@@ -76,9 +82,24 @@ async def get_session(
         .execute()
     )
 
+    # Gắn coach card vào tin user tương ứng để frontend render lại được lịch sử.
+    coach_by_msg = _coach_logs_by_message(sb, session_id)
+    messages_out = []
+    for m in msgs_result.data:
+        log = coach_by_msg.get(m["id"])
+        coach_card = None
+        if log:
+            coach_card = CoachCardOut(
+                severity=log["severity"],
+                issue=log["issue"],
+                suggestions=log["suggestions"] or [],
+                explanation=log["explanation"],
+            )
+        messages_out.append(MessageOut(**m, coach_card=coach_card))
+
     return SessionFullOut(
         session=SessionDetailOut(**session),
-        messages=[MessageOut(**m) for m in msgs_result.data],
+        messages=messages_out,
         persona=sit_result.data["persona_data"]
     )
 
@@ -95,6 +116,7 @@ async def end_session(
         raise HTTPException(status_code=404, detail="Session not found")
     if session_result.data["user_id"] != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
+    session = session_result.data
 
     sb.table("sessions").update({
         "status": "ended",
@@ -108,10 +130,35 @@ async def end_session(
         .order("created_at")
         .execute()
     )
-    transcript = [{"sender": m["sender"], "content": m["content"]} for m in msgs_result.data]
+    transcript = [
+        {"id": m["id"], "sender": m["sender"], "content": m["content"]}
+        for m in msgs_result.data
+    ]
+
+    coach_logs_result = (
+        sb.table("coach_logs")
+        .select("*")
+        .eq("session_id", session_id)
+        .order("created_at")
+        .execute()
+    )
+    coach_logs = coach_logs_result.data or []
+
+    sit_result = (
+        sb.table("situations")
+        .select("objectives")
+        .eq("id", session["situation_id"])
+        .single()
+        .execute()
+    )
+    objectives = (sit_result.data or {}).get("objectives") or {}
 
     try:
-        feedback_dict = generate_feedback(transcript)
+        feedback_dict = generate_feedback(
+            transcript=transcript,
+            coach_logs=coach_logs,
+            objectives=objectives,
+        )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Feedback generation failed: {str(e)}")
 

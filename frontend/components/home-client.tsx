@@ -223,13 +223,13 @@ export default function HomeClient({ userName: _userName }: HomeClientProps) {
           )}
 
           {isLoading ? (
-            <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-              {[...Array(6)].map((_, i) => (
-                <div key={i} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, height: 320, opacity: 0.5 }} />
+            <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, height: 360, opacity: 0.5 }} />
               ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+            <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(4, 1fr)' }}>
               {list.map((s, i) => (
                 <SituationCard
                   key={s.id}

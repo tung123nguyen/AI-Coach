@@ -4,12 +4,22 @@ import { useState, useRef, useEffect, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { api } from '@/lib/api'
-import { Message, Persona, Situation } from '@/lib/types'
+import { Message, Persona, Situation, CoachCard } from '@/lib/types'
 import { Icon } from '@/components/icon'
 import Nav from '@/components/nav'
 
 const GLYPH = 'bot'
 const ACCENT = 'oklch(0.65 0.21 255)'
+
+const CATEGORY_ICONS: Record<string, string> = {
+  work:   'briefcase',
+  daily:  'building-2',
+  social: 'users',
+  dating: 'heart',
+}
+const AMBER = 'oklch(0.78 0.17 75)'
+const AMBER_BG = 'oklch(0.78 0.17 75 / 0.08)'
+const AMBER_BORDER = 'oklch(0.78 0.17 75 / 0.25)'
 
 const iconBtn: CSSProperties = {
   height: 36, width: 36, borderRadius: 999,
@@ -39,7 +49,8 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
   const [isEnding, setIsEnding] = useState(false)
   const [error, setError] = useState('')
   const [situations, setSituations] = useState<Situation[]>([])
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
     api.getSituations()
@@ -48,16 +59,22 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
   }, [])
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
+    if (!bottomRef.current) return
+    // Instant scroll on mount, smooth for subsequent updates.
+    bottomRef.current.scrollIntoView({
+      behavior: isFirstRender.current ? 'instant' : 'smooth',
+      block: 'end',
+    })
+    isFirstRender.current = false
   }, [messages, typing])
 
   async function send(text: string) {
     const t = text.trim()
     if (!t || typing || isEnded) return
+
+    const tempId = `temp-${Date.now()}`
     const optimistic: Message = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       sender: 'user',
       content: t,
       created_at: new Date().toISOString(),
@@ -65,17 +82,31 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
     setMessages(prev => [...prev, optimistic])
     setTyping(true)
     setError('')
+
     try {
       const data = await api.sendMessage(sessionId, t)
+
+      // Replace optimistic with real user message (includes coach_card if triggered).
+      const realUserMsg: Message = {
+        id: data.user_message_id,
+        sender: 'user',
+        content: t,
+        created_at: new Date().toISOString(),
+        coach_card: data.coach_card ?? null,
+      }
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         sender: 'ai',
         content: data.ai_message,
         created_at: new Date().toISOString(),
       }
-      setMessages(prev => [...prev, aiMsg])
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== tempId),
+        realUserMsg,
+        aiMsg,
+      ])
     } catch (err) {
-      setMessages(prev => prev.filter(m => m.id !== optimistic.id))
+      setMessages(prev => prev.filter(m => m.id !== tempId))
       setError(err instanceof Error ? err.message : 'Send failed. Try again.')
     } finally {
       setTyping(false)
@@ -107,21 +138,22 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
   const subtitle = isEnded ? 'Ended session' : 'Practice session'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--background)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--background)' }}>
       <Nav current="practice" />
       <div style={{
         flex: 1,
+        minHeight: 0,
         display: 'grid',
         gridTemplateColumns: '320px 1fr 320px',
-        minHeight: 'calc(100vh - 80px)',
         borderTop: '1px solid var(--border)',
+        overflow: 'hidden',
       }}>
         <Sidebar
           situations={situations}
           onPick={handlePickSituation}
           activePersonaName={personaName}
         />
-        <main style={{ display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--background)' }}>
+        <main style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', background: 'var(--background)' }}>
           <ChatHeader
             personaName={personaName}
             subtitle={subtitle}
@@ -130,7 +162,7 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
             onEnd={handleEnd}
             sessionId={sessionId}
           />
-          <div ref={scrollRef} style={{
+          <div style={{
             flex: 1, overflowY: 'auto',
             padding: '24px 28px',
             display: 'flex', flexDirection: 'column', gap: 14,
@@ -148,6 +180,7 @@ export default function ChatClient({ sessionId, initialMessages, persona, sessio
                 background: 'oklch(0.6 0.245 27 / 0.1)', color: 'oklch(0.8 0.15 27)',
               }}>{error}</div>
             )}
+            <div ref={bottomRef} />
           </div>
           <Composer onSend={send} disabled={isEnded || typing || isEnding} />
         </main>
@@ -252,6 +285,7 @@ function Sidebar({
       width: 320, borderRight: '1px solid var(--border)',
       display: 'flex', flexDirection: 'column',
       background: 'oklch(0.07 0.012 260)',
+      overflow: 'hidden',
     }}>
       <div style={{ padding: '20px 20px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Sessions</h2>
@@ -331,9 +365,12 @@ function SidebarItem({
         background: 'oklch(0.65 0.21 255 / 0.12)',
         border: '1px solid oklch(0.65 0.21 255 / 0.25)',
         color: ACCENT,
-        fontSize: 18, lineHeight: 1,
+        overflow: 'hidden',
       }}>
-        {situation.emoji}
+        {situation.image_situation
+          ? <img src={situation.image_situation} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <Icon name={CATEGORY_ICONS[situation.category] ?? 'message-circle'} size={18} strokeWidth={1.5} />
+        }
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{situation.name}</div>
@@ -351,7 +388,7 @@ function InfoPanel({ personaName }: { personaName: string }) {
       width: 320, borderLeft: '1px solid var(--border)',
       padding: 24, display: 'flex', flexDirection: 'column', gap: 24,
       background: 'oklch(0.07 0.012 260)',
-      overflowY: 'auto',
+      overflowY: 'auto', minHeight: 0,
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <div style={{
@@ -420,7 +457,7 @@ function InfoPanel({ personaName }: { personaName: string }) {
 function MessageBubble({ m }: { m: Message }) {
   if (m.sender === 'user') {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }} className="fade-in">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }} className="fade-in">
         <div style={{
           maxWidth: '70%',
           padding: '12px 16px',
@@ -431,6 +468,11 @@ function MessageBubble({ m }: { m: Message }) {
           boxShadow: '0 1px 0 oklch(1 0 0 / 0.05)',
           whiteSpace: 'pre-wrap',
         }}>{m.content}</div>
+        {m.coach_card && (
+          <div style={{ maxWidth: '70%', width: '100%' }}>
+            <CoachCardInline card={m.coach_card} />
+          </div>
+        )}
       </div>
     )
   }
@@ -455,6 +497,103 @@ function MessageBubble({ m }: { m: Message }) {
         whiteSpace: 'pre-wrap',
         border: '1px solid var(--border)',
       }}>{m.content}</div>
+    </div>
+  )
+}
+
+function CoachCardInline({ card }: { card: CoachCard }) {
+  const [expanded, setExpanded] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+
+  if (dismissed) return null
+
+  return (
+    <div className="fade-in" style={{
+      marginTop: 6,
+      borderRadius: 10,
+      border: `1px solid ${AMBER_BORDER}`,
+      background: AMBER_BG,
+      overflow: 'hidden',
+    }}>
+      {/* Tier 1 — always visible */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '8px 12px',
+      }}>
+        <Icon name="lightbulb" size={13} style={{ color: AMBER, flexShrink: 0 }} />
+        <span style={{
+          flex: 1, fontSize: 12.5, color: 'var(--foreground)', lineHeight: 1.4,
+        }}>
+          {card.issue}
+        </span>
+        <button
+          onClick={() => setExpanded(e => !e)}
+          style={{
+            fontSize: 12, color: AMBER, fontWeight: 500,
+            background: 'transparent', border: 0, cursor: 'pointer',
+            padding: '2px 6px', borderRadius: 4, flexShrink: 0,
+            fontFamily: 'inherit',
+          }}
+        >
+          {expanded ? 'Thu gọn ↑' : 'Chi tiết ↓'}
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          style={{
+            fontSize: 14, lineHeight: 1, color: 'var(--muted-foreground)',
+            background: 'transparent', border: 0, cursor: 'pointer',
+            padding: '2px 2px', flexShrink: 0,
+            fontFamily: 'inherit',
+          }}
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Tier 2 — expanded details */}
+      {expanded && (
+        <div style={{
+          padding: '10px 12px 12px',
+          borderTop: `1px solid ${AMBER_BORDER}`,
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          <div>
+            <div style={{
+              fontSize: 10.5, fontWeight: 700, color: AMBER,
+              textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4,
+            }}>
+              Vì sao chưa tốt
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--muted-foreground)', lineHeight: 1.55 }}>
+              {card.explanation}
+            </div>
+          </div>
+          {card.suggestions.length > 0 && (
+            <div>
+              <div style={{
+                fontSize: 10.5, fontWeight: 700, color: AMBER,
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6,
+              }}>
+                Thử nói thay thế
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {card.suggestions.map((s, i) => (
+                  <div key={i} style={{
+                    fontSize: 13, padding: '8px 11px', borderRadius: 7,
+                    background: 'oklch(0.78 0.17 75 / 0.1)',
+                    border: '1px solid oklch(0.78 0.17 75 / 0.2)',
+                    color: 'var(--foreground)', lineHeight: 1.45,
+                    fontStyle: 'italic',
+                  }}>
+                    "{s}"
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

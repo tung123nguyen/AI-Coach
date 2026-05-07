@@ -12,7 +12,7 @@ export default function Nav({ current }: NavProps) {
   const links = [
     { id: 'platform', label: 'Platform', href: '#' },
     { id: 'learn', label: 'Learn', href: '#' },
-    { id: 'practice', label: 'Practice', href: '/home' },
+    { id: 'practice', label: 'Practice', href: '/practice' },
     { id: 'pricing', label: 'Pricing', href: '#' },
   ]
 

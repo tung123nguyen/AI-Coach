@@ -3,7 +3,7 @@ import {
   ShieldCheck, Workflow, Database, Bot, Rocket, ExternalLink, MessagesSquare,
   Users, FileText, Code, Headphones, PenTool, Briefcase, Mic, Mail, Plus, Wand,
   Clock, BadgeCheck, Info, MoreHorizontal, SquarePen, Search, Image as ImageIcon,
-  Smile, SendHorizontal, BellOff, Pin, Archive,
+  Smile, SendHorizontal, BellOff, Pin, Archive, AlertTriangle,
   type LucideIcon,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
@@ -44,6 +44,7 @@ const iconMap: Record<string, LucideIcon> = {
   'bell-off': BellOff,
   'pin': Pin,
   'archive': Archive,
+  'alert-triangle': AlertTriangle,
 }
 
 interface IconProps {

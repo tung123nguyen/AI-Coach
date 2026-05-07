@@ -214,7 +214,7 @@ function ChatHeader({
       backdropFilter: 'blur(12px)',
       position: 'sticky', top: 0, zIndex: 5,
     }}>
-      <Link href="/home" style={{
+      <Link href="/practice" style={{
         ...iconBtn,
         background: 'var(--secondary)', color: 'var(--foreground)',
       }} aria-label="Back">
@@ -289,7 +289,7 @@ function Sidebar({
     }}>
       <div style={{ padding: '20px 20px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.01em' }}>Sessions</h2>
-        <Link href="/home" style={{ ...iconBtn, height: 32, width: 32 }} aria-label="New session">
+        <Link href="/practice" style={{ ...iconBtn, height: 32, width: 32 }} aria-label="New session">
           <Icon name="square-pen" size={14} />
         </Link>
       </div>

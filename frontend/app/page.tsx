@@ -173,7 +173,7 @@ function Hero() {
           }}
         >
           <Link
-            href="/home"
+            href="/practice"
             className="glow-border"
             style={{
               display: "inline-flex",
@@ -667,7 +667,7 @@ function CtaBand() {
           }}
         >
           <Link
-            href="/home"
+            href="/practice"
             className="glow-border"
             style={{
               display: "inline-flex",

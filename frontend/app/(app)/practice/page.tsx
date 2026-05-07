@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import HomeClient from '@/components/home-client'
+import PracticeClient from '@/components/practice-client'
 
-export default async function HomePage() {
+export default async function PracticePage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -16,5 +16,5 @@ export default async function HomePage() {
 
   const userName = profile?.name || user.email?.split('@')[0] || 'bạn'
 
-  return <HomeClient userName={userName} />
+  return <PracticeClient userName={userName} />
 }

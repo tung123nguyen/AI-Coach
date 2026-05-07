@@ -1,13 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
+import { Icon } from '@/components/icon'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -16,8 +13,9 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [btnHover, setBtnHover] = useState(false)
 
-  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
 
@@ -44,27 +42,26 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/home')
+    router.push('/practice')
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-10">
-      <div className="relative z-10 w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-2 font-semibold text-xl tracking-tight">
-            <span>ConvGym</span>
-            <span className="w-3.5 h-3.5 bg-blue-600 rounded-sm inline-block" />
-          </Link>
-          <p className="text-zinc-500 text-sm mt-3">Tạo tài khoản miễn phí</p>
-        </div>
+    <main style={s.page}>
+      <div aria-hidden style={s.glow} />
+
+      <div style={s.wrap}>
+        {/* Brand */}
+        <Link href="/" style={s.brand}>
+          <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.02em' }}>Neuralearn</span>
+          <span style={{ height: 10, width: 10, borderRadius: 2, background: 'var(--primary)', display: 'inline-block' }} aria-hidden />
+        </Link>
+        <p style={s.subtitle}>Tạo tài khoản miễn phí</p>
 
         {/* Card */}
-        <div className="bg-white/2 border border-white/10 rounded-2xl p-7">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-zinc-300 text-sm">Tên của bạn</Label>
-              <Input
+        <div style={s.card}>
+          <form onSubmit={handleSubmit} style={s.form}>
+            <Field label="Tên của bạn">
+              <input
                 id="name"
                 type="text"
                 placeholder="Nguyễn Văn A"
@@ -72,12 +69,12 @@ export default function SignupPage() {
                 onChange={e => setName(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-white/4 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 h-11 rounded-xl"
+                style={s.input}
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-zinc-300 text-sm">Email</Label>
-              <Input
+            </Field>
+
+            <Field label="Email">
+              <input
                 id="email"
                 type="email"
                 placeholder="ban@email.com"
@@ -85,12 +82,12 @@ export default function SignupPage() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-white/4 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 h-11 rounded-xl"
+                style={s.input}
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-zinc-300 text-sm">Mật khẩu</Label>
-              <Input
+            </Field>
+
+            <Field label="Mật khẩu">
+              <input
                 id="password"
                 type="password"
                 placeholder="Ít nhất 8 ký tự"
@@ -98,44 +95,164 @@ export default function SignupPage() {
                 onChange={e => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-white/4 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 h-11 rounded-xl"
+                style={s.input}
               />
-            </div>
+            </Field>
 
             {error && (
-              <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5">
-                <span className="shrink-0 mt-px">⚠</span>
+              <div style={s.errorBox}>
+                <Icon name="alert-triangle" size={14} style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>{error}</span>
               </div>
             )}
 
-            <Button
+            <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl h-11 mt-2 transition-colors"
+              onMouseEnter={() => setBtnHover(true)}
+              onMouseLeave={() => setBtnHover(false)}
+              style={{ ...s.btn, background: btnHover ? 'var(--primary-glow)' : 'var(--primary)' }}
             >
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Đang tạo tài khoản...
-                </span>
+                <>
+                  <span style={s.spinner} />
+                  Đang tạo tài khoản…
+                </>
               ) : (
-                <span className="flex items-center justify-center gap-2">
+                <>
                   Đăng ký
-                  <ArrowRight className="w-4 h-4" />
-                </span>
+                  <Icon name="arrow-right" size={16} />
+                </>
               )}
-            </Button>
+            </button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-zinc-500 mt-6">
+        <p style={s.foot}>
           Đã có tài khoản?{' '}
-          <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-            Đăng nhập
-          </Link>
+          <Link href="/login" style={s.footLink}>Đăng nhập</Link>
         </p>
       </div>
+    </main>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted-foreground)' }}>{label}</label>
+      {children}
     </div>
   )
+}
+
+const s: Record<string, CSSProperties> = {
+  page: {
+    minHeight: '100vh',
+    background: 'var(--background)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px 16px',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  glow: {
+    position: 'absolute',
+    inset: 0,
+    background: 'var(--gradient-hero)',
+    pointerEvents: 'none',
+  },
+  wrap: {
+    position: 'relative',
+    zIndex: 1,
+    width: '100%',
+    maxWidth: 400,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  brand: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    color: 'var(--foreground)',
+    marginBottom: 8,
+  },
+  subtitle: {
+    margin: '0 0 28px',
+    fontSize: 14,
+    color: 'var(--muted-foreground)',
+  },
+  card: {
+    width: '100%',
+    background: 'var(--card)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: 28,
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+  },
+  input: {
+    width: '100%',
+    height: 44,
+    borderRadius: 10,
+    border: '1px solid var(--input)',
+    background: 'oklch(1 0 0 / 0.04)',
+    color: 'var(--foreground)',
+    fontSize: 14,
+    padding: '0 14px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    boxSizing: 'border-box',
+  },
+  errorBox: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+    fontSize: 13,
+    color: 'oklch(0.75 0.15 27)',
+    background: 'oklch(0.6 0.245 27 / 0.1)',
+    border: '1px solid oklch(0.6 0.245 27 / 0.25)',
+    borderRadius: 8,
+    padding: '10px 12px',
+  },
+  btn: {
+    width: '100%',
+    height: 44,
+    borderRadius: 10,
+    border: 0,
+    background: 'var(--primary)',
+    color: 'var(--primary-foreground)',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    transition: 'background 0.2s',
+    marginTop: 4,
+  },
+  spinner: {
+    display: 'inline-block',
+    width: 16,
+    height: 16,
+    borderRadius: 999,
+    border: '2px solid oklch(1 0 0 / 0.25)',
+    borderTopColor: 'var(--primary-foreground)',
+    animation: 'spin 0.7s linear infinite',
+  },
+  foot: {
+    marginTop: 20,
+    fontSize: 13,
+    color: 'var(--muted-foreground)',
+  },
+  footLink: {
+    color: 'var(--primary)',
+    fontWeight: 500,
+  },
 }

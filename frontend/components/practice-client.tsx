@@ -141,11 +141,11 @@ function PracticeFeatured({ onCustom }: { onCustom: () => void }) {
   )
 }
 
-interface HomeClientProps {
+interface PracticeClientProps {
   userName: string
 }
 
-export default function HomeClient({ userName: _userName }: HomeClientProps) {
+export default function PracticeClient({ userName: _userName }: PracticeClientProps) {
   const router = useRouter()
   const [situations, setSituations] = useState<Situation[]>([])
   const [isLoading, setIsLoading] = useState(true)
